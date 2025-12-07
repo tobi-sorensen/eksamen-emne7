@@ -28,7 +28,7 @@ export default async function HomePage() {
       <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Bøker til salgs</h1>
 
       {books.length === 0 ? (
-        <p>Ingen bøker funnet. Legg inn noen i admin-panelet først.</p>
+        <p>Ingen bøker funnet.</p>
       ) : (
         <ul style={{ display: 'grid', gap: '1rem' }}>
           {books.map((book) => (
