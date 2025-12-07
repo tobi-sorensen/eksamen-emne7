@@ -1,59 +1,61 @@
-import { headers as getHeaders } from 'next/headers.js'
-import Image from 'next/image'
-import { getPayload } from 'payload'
-import React from 'react'
-import { fileURLToPath } from 'url'
+import type { Book } from '../../payload-types'; 
+type BooksResponse = {
+  docs: Book[];
+  totalDocs: number;
+};
 
-import config from '@/payload.config'
-import './styles.css'
+async function getBooks(): Promise<Book[]> {
+  const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000';
+
+  const res = await fetch(`${baseUrl}/api/books?depth=0`, {
+    cache: 'no-store',
+  });
+
+  if (!res.ok) {
+    console.error('Kunne ikke hente bøker', await res.text());
+    return [];
+  }
+
+  const data = (await res.json()) as BooksResponse;
+  return data.docs;
+}
 
 export default async function HomePage() {
-  const headers = await getHeaders()
-  const payloadConfig = await config
-  const payload = await getPayload({ config: payloadConfig })
-  const { user } = await payload.auth({ headers })
-
-  const fileURL = `vscode://file/${fileURLToPath(import.meta.url)}`
+  const books = await getBooks();
 
   return (
-    <div className="home">
-      <div className="content">
-        <picture>
-          <source srcSet="https://raw.githubusercontent.com/payloadcms/payload/main/packages/ui/src/assets/payload-favicon.svg" />
-          <Image
-            alt="Payload Logo"
-            height={65}
-            src="https://raw.githubusercontent.com/payloadcms/payload/main/packages/ui/src/assets/payload-favicon.svg"
-            width={65}
-          />
-        </picture>
-        {!user && <h1>Welcome to your new project.</h1>}
-        {user && <h1>Welcome back, {user.email}</h1>}
-        <div className="links">
-          <a
-            className="admin"
-            href={payloadConfig.routes.admin}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Go to admin panel
-          </a>
-          <a
-            className="docs"
-            href="https://payloadcms.com/docs"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Documentation
-          </a>
-        </div>
-      </div>
-      <div className="footer">
-        <p>Update this page by editing</p>
-        <a className="codeLink" href={fileURL}>
-          <code>app/(frontend)/page.tsx</code>
-        </a>
-      </div>
-    </div>
-  )
+    <main style={{ padding: '2rem' }}>
+      <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Bøker til salgs</h1>
+
+      {books.length === 0 ? (
+        <p>Ingen bøker funnet. Legg inn noen i admin-panelet først.</p>
+      ) : (
+        <ul style={{ display: 'grid', gap: '1rem' }}>
+          {books.map((book) => (
+            <li
+              key={book.id}
+              style={{
+                border: '1px solid #ccc',
+                borderRadius: '0.5rem',
+                padding: '1rem',
+              }}
+            >
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>
+                {book.title}
+              </h2>
+
+              {book.description && (
+                <p style={{ marginBottom: '0.5rem' }}>{book.description}</p>
+              )}
+
+              <p>
+                <strong>På lager:</strong>{' '}
+                {typeof book.stock === 'number' ? book.stock : 'Ukjent'}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </main>
+  );
 }
