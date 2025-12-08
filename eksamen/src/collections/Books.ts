@@ -22,6 +22,14 @@ export const Books: CollectionConfig = {
       required: true,
     },
     {
+      name: 'author',
+      type: 'relationship',
+      relationTo: 'authors',
+      label: 'Forfatter',
+      hasMany: false,
+      required: false,
+    },
+    {
       name: 'description',
       type: 'textarea',
       label: 'Beskrivelse / tilstand',
