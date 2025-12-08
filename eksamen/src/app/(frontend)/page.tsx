@@ -1,9 +1,16 @@
 import React from "react"
+import AuthorFilter from "./AuthorFilter"
 
 type Media = {
   id: string
   url?: string
   alt?: string
+}
+
+type Author = {
+  id: string
+  name: string
+  bio?: string
 }
 
 type Book = {
@@ -12,24 +19,28 @@ type Book = {
   description?: string
   stock?: number
   cover?: Media | string | null
+  author?: Author | string | null
 }
 
 type PayloadListResponse<T> = {
   docs: T[]
-  totalDocs: number
-  limit: number
-  totalPages: number
-  page: number
-  pagingCounter: number
-  hasPrevPage: boolean
-  hasNextPage: boolean
-  prevPage: number | null
-  nextPage: number | null
+}
+
+function normalizeId(value: any): string | null {
+  if (value == null) return null
+
+  // Hvis object → ta id-feltet
+  if (typeof value === "object") {
+    return String(value.id)
+  }
+
+  // Hvis tall eller string → returner som string
+  return String(value)
 }
 
 const CMS_URL = process.env.NEXT_PUBLIC_CMS_URL ?? "http://localhost:3000"
 
-async function getBooks(): Promise<PayloadListResponse<Book>> {
+async function getBooks(): Promise<Book[]> {
   const res = await fetch(`${CMS_URL}/api/books?depth=2`, {
     cache: "no-store",
   })
@@ -39,39 +50,58 @@ async function getBooks(): Promise<PayloadListResponse<Book>> {
     throw new Error("Feil ved API-kall")
   }
 
-  return res.json()
+  const data = (await res.json()) as PayloadListResponse<Book>
+  return data.docs ?? []
 }
 
-export default async function HomePage() {
-  let books: Book[] = []
+async function getAuthors() {
+  const res = await fetch(`${CMS_URL}/api/authors?depth=0`, {
+    cache: "no-store",
+  })
 
-  try {
-    const data = await getBooks()
-    books = Array.isArray(data?.docs) ? data.docs : []
-  } catch (err) {
-    console.error(err)
-  }
+  if (!res.ok) return []
+
+  const data = await res.json()
+  return data.docs ?? []
+}
+
+export default async function HomePage({ searchParams }: any) {
+  const selectedAuthor = searchParams?.author ?? null
+
+  const authors = await getAuthors()
+  const books = await getBooks()
+
+  const filteredBooks = selectedAuthor
+  ? books.filter((b) => normalizeId(b.author) === String(selectedAuthor))
+  : books
 
   return (
     <main>
+      <AuthorFilter authors={authors} selectedAuthor={selectedAuthor} />
       <h1>Bøker til salgs</h1>
 
       {books.length === 0 ? (
-        <p>Ingen bøker funnet. Legg til noen i adminpanelet.</p>
+        <p>Ingen bøker funnet. Legg inn noen i adminpanelet.</p>
       ) : (
         <ul className="book-grid">
-          {books.map((book) => {
-
-            const cover =
+          {filteredBooks.map((book) => {
+           
+            const coverObj =
               book.cover && typeof book.cover === "object"
                 ? (book.cover as Media)
                 : null
 
-            const coverUrl = cover?.url
-              ? cover.url.startsWith("http")
-                ? cover.url
-                : `${CMS_URL}${cover.url}`
+            const coverUrl = coverObj?.url
+              ? coverObj.url.startsWith("http")
+                ? coverObj.url
+                : `${CMS_URL}${coverObj.url}`
               : null
+
+
+            const authorObj =
+              book.author && typeof book.author === "object"
+                ? (book.author as Author)
+                : null
 
             return (
               <li className="book-card" key={book.id}>
@@ -79,12 +109,21 @@ export default async function HomePage() {
                   <img
                     className="book-image"
                     src={coverUrl}
-                    alt={cover?.alt ?? book.title}
+                    alt={coverObj?.alt ?? book.title}
                   />
                 )}
 
                 <div className="book-content">
                   <h2 className="book-title">{book.title}</h2>
+
+                  {authorObj && (
+                   <p className="book-author">
+                      Forfatter:{" "}
+                      <a href={`/authors/${normalizeId(book.author)}`} className="book-author-link">
+                        {authorObj.name}
+                         </a>
+                    </p>
+                  )}
 
                   {book.description && (
                     <p className="book-description">{book.description}</p>
@@ -96,7 +135,7 @@ export default async function HomePage() {
                       (book.stock === 0 ? "out-of-stock" : "in-stock")
                     }
                   >
-                    På lager: {book.stock}
+                    På lager: {book.stock ?? 0}
                   </p>
                 </div>
               </li>
