@@ -1,67 +1,103 @@
-# Payload Blank Template
+BookDragons – Nettbutikk for bruktbøker
 
-This template comes configured with the bare minimum to get started on anything you need.
+BookDragons er en nettbutikk bygget med Next.js og Payload CMS.
+Kunder kan se og filtrere bøker, legge dem i handlekurven og sende inn en bestilling.
+Ansatte bruker Payloads adminpanel for å administrere bøker, forfattere, sjangere, media og bestillinger.
 
-## Quick start
+Teknologier:
 
-This template can be deployed directly from our Cloud hosting and it will setup MongoDB and cloud S3 object storage for media.
+1. Next.js 14 (App Router)
 
-## Quick Start - local setup
+2. React med TypeScript
 
-To spin up this template locally, follow these steps:
+3. Payload CMS
 
-### Clone
+4. SQLite database
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+5. Egen CSS-styling for frontend
 
-### Development
+6. React Context for handlekurv
 
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URI` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
+Installasjon
+1. Klon prosjektet
+git clone <repo-url>
+cd <prosjektmappe>
 
-3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
+2. Installer avhengigheter
+npm install
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+3. Opprett .env-fil
 
-#### Docker (Optional)
+Opprett en fil i rotmappen med navnet .env og legg inn:
 
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
+PAYLOAD_SECRET=secret
+DATABASE_URI=sqlite:./eksam3n.db
+NEXT_PUBLIC_CMS_URL=http://localhost:3000
 
-To do so, follow these steps:
+4. Start utviklingsserver
+npm run dev
 
-- Modify the `MONGODB_URI` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URI` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
 
-## How it works
+Frontend og adminpanel åpnes på:
 
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+http://localhost:3000
 
-### Collections
+http://localhost:3000/admin
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
 
-- #### Users (Authentication)
+Funksjonalitet
 
-  Users are auth-enabled collections that have access to the admin panel.
 
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/main/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
+Frontend
 
-- #### Media
+Vise alle bøker
 
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
+Filtrering etter forfatter og sjanger
 
-### Docker
+Vise lagerstatus og aldergruppe
 
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
+Handlekurv med lagring i localStorage
 
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
+Innsending av bestillinger til Payload API
 
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
+Egen side for forfattere og sjangere
 
-## Questions
 
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+Backend (Payload CMS)
+
+Administrasjon av bøker
+
+Opplasting av omslagsbilder
+
+Registrering av forfattere og sjangere
+
+Oversikt over bestillinger fra kunder
+
+Håndtering av mediafiler
+
+Adminbrukere
+
+Bygg prosjektet
+
+For å bygge applikasjonen for produksjon:
+
+npm run build
+npm start
+
+Videre utvikling
+
+Alle Payload-collections ligger i src/collections/
+
+Payload-konfigurasjonen ligger i src/payload.config.ts
+
+Frontend-sider ligger i src/app/(frontend)/
+
+Handlekurv-logikk ligger i src/app/(frontend)/cartComponents/
+
+Passord og epost brukt: 
+
+bob@gmail.com
+passord: 123456
+
+Video besvarelse:
+https://youtu.be/9MGYpMU7CEs
