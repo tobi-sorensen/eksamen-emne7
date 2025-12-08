@@ -1,4 +1,4 @@
-import { CollectionConfig } from 'payload';
+import type { CollectionConfig } from 'payload'
 
 export const Books: CollectionConfig = {
   slug: 'books',
@@ -10,6 +10,10 @@ export const Books: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'stock', 'createdAt'],
   },
+  access: {
+  read: () => true,
+},
+
   fields: [
     {
       name: 'title',
@@ -30,7 +34,11 @@ export const Books: CollectionConfig = {
       defaultValue: 1,
       min: 0,
     },
+    {
+      name: 'cover',
+      type: 'upload',
+      relationTo: 'media',
+      label: 'Omslagsbilde',
+    },
   ],
-};
-
-export default Books;
+}

@@ -148,7 +148,7 @@ export interface User {
  */
 export interface Media {
   id: number;
-  alt: string;
+  alt?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -170,6 +170,7 @@ export interface Book {
   title: string;
   description?: string | null;
   stock: number;
+  cover?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
 }
@@ -299,6 +300,7 @@ export interface BooksSelect<T extends boolean = true> {
   title?: T;
   description?: T;
   stock?: T;
+  cover?: T;
   updatedAt?: T;
   createdAt?: T;
 }

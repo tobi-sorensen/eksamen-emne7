@@ -13,6 +13,7 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL,
   admin: {
     user: Users.slug,
     importMap: {
@@ -21,7 +22,7 @@ export default buildConfig({
   },
   collections: [Users, Media, Books],
   editor: lexicalEditor(),
-  secret: process.env.PAYLOAD_SECRET || '',
+  secret: process.env.PAYLOAD_SECRET!,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
