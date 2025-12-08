@@ -30,6 +30,9 @@ type Book = {
 
 type PayloadListResponse<T> = {
   docs: T[]
+  totalDocs: number
+  totalPages: number
+  page: number
 }
 
 const CMS_URL =
@@ -41,27 +44,27 @@ function normalizeId(value: any): string | null {
   return String(value)
 }
 
-async function getAuthor(id: string): Promise<Author | null> {
-  const res = await fetch(`${CMS_URL}/api/authors/${id}`, {
+async function getGenre(id: string): Promise<Genre | null> {
+  const res = await fetch(`${CMS_URL}/api/genres/${id}`, {
     cache: "no-store",
   })
 
   if (!res.ok) {
-    console.error("Kunne ikke hente forfatter:", await res.text())
+    console.error("Kunne ikke hente sjanger:", await res.text())
     return null
   }
 
   return res.json()
 }
 
-async function getBooksByAuthor(authorId: string): Promise<Book[]> {
+async function getBooksByGenre(genreId: string): Promise<Book[]> {
   const res = await fetch(
-    `${CMS_URL}/api/books?depth=2&where[author][equals]=${authorId}`,
+    `${CMS_URL}/api/books?depth=2&where[genres][in]=${genreId}`,
     { cache: "no-store" },
   )
 
   if (!res.ok) {
-    console.error("Kunne ikke hente bøker for forfatter:", await res.text())
+    console.error("Kunne ikke hente bøker for sjanger:", await res.text())
     return []
   }
 
@@ -73,17 +76,17 @@ type PageProps = {
   params: { id: string }
 }
 
-export default async function AuthorDetailPage({ params }: PageProps) {
-  const author = await getAuthor(params.id)
-  const books = author ? await getBooksByAuthor(String(author.id)) : []
+export default async function GenreDetailPage({ params }: PageProps) {
+  const genre = await getGenre(params.id)
+  const books = genre ? await getBooksByGenre(String(genre.id)) : []
 
-  if (!author) {
+  if (!genre) {
     return (
       <main className="page">
-        <h1 className="page-title">Forfatter ikke funnet</h1>
-        <p>Beklager! Denne forfatteren finnes ikke.</p>
-        <a href="/" className="back-link">
-          ← Tilbake til forsiden
+        <h1 className="page-title">Sjanger ikke funnet</h1>
+        <p>Beklager! Denne sjangeren finnes ikke.</p>
+        <a href="/genres" className="back-link">
+          ← Tilbake til alle sjangere
         </a>
       </main>
     )
@@ -91,20 +94,18 @@ export default async function AuthorDetailPage({ params }: PageProps) {
 
   return (
     <main className="page">
-      <a href="/" className="back-link">
-        ← Tilbake til forsiden
+      <a href="/genres" className="back-link">
+        ← Tilbake til alle sjangere
       </a>
 
-      <h1 className="page-title">{author.name}</h1>
+      <h1 className="page-title">{genre.name}</h1>
 
-      {author.bio && (
-        <p className="author-bio">{author.bio}</p>
+      {genre.description && (
+        <p className="genre-description">{genre.description}</p>
       )}
 
-      <h2 className="section-title">Bøker av denne forfatteren</h2>
-
       {books.length === 0 ? (
-        <p>Ingen bøker funnet for denne forfatteren.</p>
+        <p>Ingen bøker funnet i denne sjangeren.</p>
       ) : (
         <ul className="book-grid">
           {books.map((book) => {
@@ -122,7 +123,7 @@ export default async function AuthorDetailPage({ params }: PageProps) {
             const authorObj =
               book.author && typeof book.author === "object"
                 ? (book.author as Author)
-                : author
+                : null
 
             const genres =
               Array.isArray(book.genres)
@@ -149,7 +150,7 @@ export default async function AuthorDetailPage({ params }: PageProps) {
                     <p className="book-author">
                       Forfatter:{" "}
                       <a
-                        href={`/authors/${normalizeId(book.author ?? authorObj.id)}`}
+                        href={`/authors/${normalizeId(book.author)}`}
                         className="book-author-link"
                       >
                         {authorObj.name}
@@ -159,13 +160,13 @@ export default async function AuthorDetailPage({ params }: PageProps) {
 
                   {genres.length > 0 && (
                     <div className="book-genres">
-                      {genres.map((genre) => (
+                      {genres.map((g) => (
                         <a
-                          key={genre.id}
-                          href={`/genres/${genre.id}`}
+                          key={g.id}
+                          href={`/genres/${g.id}`}
                           className="genre-pill"
                         >
-                          {genre.name}
+                          {g.name}
                         </a>
                       ))}
                     </div>
