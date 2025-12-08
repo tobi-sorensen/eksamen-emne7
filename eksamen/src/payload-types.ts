@@ -177,6 +177,7 @@ export interface Book {
   stock: number;
   genres?: (number | Genre)[] | null;
   cover?: (number | null) | Media;
+  ageGroup?: ('barn' | 'ungdom' | 'voksen') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -339,6 +340,7 @@ export interface BooksSelect<T extends boolean = true> {
   stock?: T;
   genres?: T;
   cover?: T;
+  ageGroup?: T;
   updatedAt?: T;
   createdAt?: T;
 }
