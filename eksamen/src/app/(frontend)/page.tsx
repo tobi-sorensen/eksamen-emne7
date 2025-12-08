@@ -1,61 +1,109 @@
-import type { Book } from '../../payload-types'; 
-type BooksResponse = {
-  docs: Book[];
-  totalDocs: number;
-};
+import React from "react"
 
-async function getBooks(): Promise<Book[]> {
-  const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000';
+type Media = {
+  id: string
+  url?: string
+  alt?: string
+}
 
-  const res = await fetch(`${baseUrl}/api/books?depth=0`, {
-    cache: 'no-store',
-  });
+type Book = {
+  id: string
+  title: string
+  description?: string
+  stock?: number
+  cover?: Media | string | null
+}
+
+type PayloadListResponse<T> = {
+  docs: T[]
+  totalDocs: number
+  limit: number
+  totalPages: number
+  page: number
+  pagingCounter: number
+  hasPrevPage: boolean
+  hasNextPage: boolean
+  prevPage: number | null
+  nextPage: number | null
+}
+
+const CMS_URL = process.env.NEXT_PUBLIC_CMS_URL ?? "http://localhost:3000"
+
+async function getBooks(): Promise<PayloadListResponse<Book>> {
+  const res = await fetch(`${CMS_URL}/api/books?depth=2`, {
+    cache: "no-store",
+  })
 
   if (!res.ok) {
-    console.error('Kunne ikke hente bøker', await res.text());
-    return [];
+    console.error("Kunne ikke hente bøker:", await res.text())
+    throw new Error("Feil ved API-kall")
   }
 
-  const data = (await res.json()) as BooksResponse;
-  return data.docs;
+  return res.json()
 }
 
 export default async function HomePage() {
-  const books = await getBooks();
+  let books: Book[] = []
+
+  try {
+    const data = await getBooks()
+    books = Array.isArray(data?.docs) ? data.docs : []
+  } catch (err) {
+    console.error(err)
+  }
 
   return (
-    <main style={{ padding: '2rem' }}>
-      <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Bøker til salgs</h1>
+    <main>
+      <h1>Bøker til salgs</h1>
 
       {books.length === 0 ? (
-        <p>Ingen bøker funnet.</p>
+        <p>Ingen bøker funnet. Legg til noen i adminpanelet.</p>
       ) : (
-        <ul style={{ display: 'grid', gap: '1rem' }}>
-          {books.map((book) => (
-            <li
-              key={book.id}
-              style={{
-                border: '1px solid #ccc',
-                borderRadius: '0.5rem',
-                padding: '1rem',
-              }}
-            >
-              <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>
-                {book.title}
-              </h2>
+        <ul className="book-grid">
+          {books.map((book) => {
 
-              {book.description && (
-                <p style={{ marginBottom: '0.5rem' }}>{book.description}</p>
-              )}
+            const cover =
+              book.cover && typeof book.cover === "object"
+                ? (book.cover as Media)
+                : null
 
-              <p>
-                <strong>På lager:</strong>{' '}
-                {typeof book.stock === 'number' ? book.stock : 'Ukjent'}
-              </p>
-            </li>
-          ))}
+            const coverUrl = cover?.url
+              ? cover.url.startsWith("http")
+                ? cover.url
+                : `${CMS_URL}${cover.url}`
+              : null
+
+            return (
+              <li className="book-card" key={book.id}>
+                {coverUrl && (
+                  <img
+                    className="book-image"
+                    src={coverUrl}
+                    alt={cover?.alt ?? book.title}
+                  />
+                )}
+
+                <div className="book-content">
+                  <h2 className="book-title">{book.title}</h2>
+
+                  {book.description && (
+                    <p className="book-description">{book.description}</p>
+                  )}
+
+                  <p
+                    className={
+                      "book-stock " +
+                      (book.stock === 0 ? "out-of-stock" : "in-stock")
+                    }
+                  >
+                    På lager: {book.stock}
+                  </p>
+                </div>
+              </li>
+            )
+          })}
         </ul>
       )}
     </main>
-  );
+  )
 }
