@@ -72,6 +72,7 @@ export interface Config {
     books: Book;
     authors: Author;
     genres: Genre;
+    orders: Order;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -84,6 +85,7 @@ export interface Config {
     books: BooksSelect<false> | BooksSelect<true>;
     authors: AuthorsSelect<false> | AuthorsSelect<true>;
     genres: GenresSelect<false> | GenresSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -205,6 +207,24 @@ export interface Genre {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string | null;
+  status?: ('new' | 'picked' | 'completed' | 'cancelled') | null;
+  items: {
+    book: number | Book;
+    quantity: number;
+    id?: string | null;
+  }[];
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -246,6 +266,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'genres';
         value: number | Genre;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -361,6 +385,25 @@ export interface AuthorsSelect<T extends boolean = true> {
 export interface GenresSelect<T extends boolean = true> {
   name?: T;
   description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  customerName?: T;
+  customerEmail?: T;
+  customerPhone?: T;
+  status?: T;
+  items?:
+    | T
+    | {
+        book?: T;
+        quantity?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

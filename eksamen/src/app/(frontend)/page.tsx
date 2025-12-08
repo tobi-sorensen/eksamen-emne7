@@ -1,6 +1,8 @@
 import React from "react"
 import AuthorFilter from "./AuthorFilter"
 import GenreFilter from "./GenreFilter"
+import AddToCartWrapper from "../cartComponents/AddToCartWrapper"
+import CartSummary from "../cartComponents/CartSummary"
 
 type Media = {
   id: string | number
@@ -133,6 +135,7 @@ export default async function HomePage({ searchParams }: PageProps) {
         <AuthorFilter authors={authors} selectedAuthor={selectedAuthor} />
         <GenreFilter genres={genres} selectedGenre={selectedGenre} />
       </div>
+      <CartSummary />
 
       <h1>Bøker til salgs</h1>
 
@@ -228,6 +231,7 @@ export default async function HomePage({ searchParams }: PageProps) {
                   >
                     På lager: {book.stock ?? 0}
                   </p>
+                  <AddToCartWrapper id={book.id} title={book.title} />
                 </div>
               </li>
             )
