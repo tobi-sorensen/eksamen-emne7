@@ -28,6 +28,7 @@ type Book = {
   cover?: Media | string | null
   author?: Author | string | number | null
   genres?: (Genre | string | number)[] | null
+  ageGroup?: 'barn' | 'ungdom' | 'voksen' | null
 }
 
 type PayloadListResponse<T> = {
@@ -86,6 +87,20 @@ type PageProps = {
   searchParams?: {
     author?: string
     genre?: string
+  }
+}
+
+function formatAgeGroup(age?: Book['ageGroup']): string | null {
+  if (!age) return null
+  switch (age) {
+    case 'barn':
+      return 'Barn'
+    case 'ungdom':
+      return 'Ungdom'
+    case 'voksen':
+      return 'Voksen'
+    default:
+      return null
   }
 }
 
@@ -194,6 +209,12 @@ export default async function HomePage({ searchParams }: PageProps) {
                       </div>
                     </div>
                   )}
+                  {formatAgeGroup(book.ageGroup) && (
+                    <p className="book-age">
+                      Anbefalt alder: <span>{formatAgeGroup(book.ageGroup)}</span>
+                    </p>
+                   )}
+
 
                   {book.description && (
                     <p className="book-description">{book.description}</p>
