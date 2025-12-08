@@ -1,44 +1,51 @@
 import React from "react"
 import AuthorFilter from "./AuthorFilter"
+import GenreFilter from "./GenreFilter"
 
 type Media = {
-  id: string
+  id: string | number
   url?: string
   alt?: string
 }
 
 type Author = {
-  id: string
+  id: string | number
   name: string
   bio?: string
 }
 
+type Genre = {
+  id: string | number
+  name: string
+  description?: string
+}
+
 type Book = {
-  id: string
+  id: string | number
   title: string
   description?: string
   stock?: number
   cover?: Media | string | null
-  author?: Author | string | null
+  author?: Author | string | number | null
+  genres?: (Genre | string | number)[] | null
+  ageGroup?: 'barn' | 'ungdom' | 'voksen' | null
 }
 
 type PayloadListResponse<T> = {
   docs: T[]
 }
 
-function normalizeId(value: any): string | null {
+const CMS_URL = process.env.NEXT_PUBLIC_CMS_URL ?? "http://localhost:3000"
+
+function normalizeId(value: unknown): string | null {
   if (value == null) return null
 
-  // Hvis object → ta id-feltet
-  if (typeof value === "object") {
-    return String(value.id)
+  if (typeof value === "object" && "id" in (value as any)) {
+    return String((value as any).id)
   }
 
-  // Hvis tall eller string → returner som string
   return String(value)
 }
-
-const CMS_URL = process.env.NEXT_PUBLIC_CMS_URL ?? "http://localhost:3000"
 
 async function getBooks(): Promise<Book[]> {
   const res = await fetch(`${CMS_URL}/api/books?depth=2`, {
@@ -54,30 +61,79 @@ async function getBooks(): Promise<Book[]> {
   return data.docs ?? []
 }
 
-async function getAuthors() {
+async function getAuthors(): Promise<Author[]> {
   const res = await fetch(`${CMS_URL}/api/authors?depth=0`, {
     cache: "no-store",
   })
 
   if (!res.ok) return []
 
-  const data = await res.json()
+  const data = (await res.json()) as PayloadListResponse<Author>
   return data.docs ?? []
 }
 
-export default async function HomePage({ searchParams }: any) {
+async function getGenres(): Promise<Genre[]> {
+  const res = await fetch(`${CMS_URL}/api/genres?depth=0`, {
+    cache: "no-store",
+  })
+
+  if (!res.ok) return []
+
+  const data = (await res.json()) as PayloadListResponse<Genre>
+  return data.docs ?? []
+}
+
+type PageProps = {
+  searchParams?: {
+    author?: string
+    genre?: string
+  }
+}
+
+function formatAgeGroup(age?: Book['ageGroup']): string | null {
+  if (!age) return null
+  switch (age) {
+    case 'barn':
+      return 'Barn'
+    case 'ungdom':
+      return 'Ungdom'
+    case 'voksen':
+      return 'Voksen'
+    default:
+      return null
+  }
+}
+
+export default async function HomePage({ searchParams }: PageProps) {
   const selectedAuthor = searchParams?.author ?? null
+  const selectedGenre = searchParams?.genre ?? null
 
-  const authors = await getAuthors()
-  const books = await getBooks()
+  const [authors, genres, books] = await Promise.all([
+    getAuthors(),
+    getGenres(),
+    getBooks(),
+  ])
 
-  const filteredBooks = selectedAuthor
-  ? books.filter((b) => normalizeId(b.author) === String(selectedAuthor))
-  : books
+  const filteredBooks = books.filter((book) => {
+    const matchesAuthor = selectedAuthor
+      ? normalizeId(book.author) === String(selectedAuthor)
+      : true
+
+    const matchesGenre = selectedGenre
+      ? Array.isArray(book.genres) &&
+        book.genres.some((g) => normalizeId(g) === String(selectedGenre))
+      : true
+
+    return matchesAuthor && matchesGenre
+  })
 
   return (
     <main>
-      <AuthorFilter authors={authors} selectedAuthor={selectedAuthor} />
+      <div className="filters-row">
+        <AuthorFilter authors={authors} selectedAuthor={selectedAuthor} />
+        <GenreFilter genres={genres} selectedGenre={selectedGenre} />
+      </div>
+
       <h1>Bøker til salgs</h1>
 
       {books.length === 0 ? (
@@ -85,7 +141,6 @@ export default async function HomePage({ searchParams }: any) {
       ) : (
         <ul className="book-grid">
           {filteredBooks.map((book) => {
-           
             const coverObj =
               book.cover && typeof book.cover === "object"
                 ? (book.cover as Media)
@@ -97,11 +152,14 @@ export default async function HomePage({ searchParams }: any) {
                 : `${CMS_URL}${coverObj.url}`
               : null
 
-
             const authorObj =
               book.author && typeof book.author === "object"
                 ? (book.author as Author)
                 : null
+
+            const genresArray = Array.isArray(book.genres)
+              ? (book.genres as (Genre | string | number)[])
+              : []
 
             return (
               <li className="book-card" key={book.id}>
@@ -117,13 +175,46 @@ export default async function HomePage({ searchParams }: any) {
                   <h2 className="book-title">{book.title}</h2>
 
                   {authorObj && (
-                   <p className="book-author">
+                    <p className="book-author">
                       Forfatter:{" "}
-                      <a href={`/authors/${normalizeId(book.author)}`} className="book-author-link">
+                      <a
+                        href={`/authors/${normalizeId(book.author)}`}
+                        className="book-author-link"
+                      >
                         {authorObj.name}
-                         </a>
+                      </a>
                     </p>
                   )}
+
+                  {genresArray.length > 0 && (
+                    <div className="book-genres">
+                      <span className="book-genres-label">Sjanger:</span>
+                      <div className="book-genres-list">
+                        {genresArray.map((g, index) => {
+                          const genreObj =
+                            typeof g === "object" ? (g as Genre) : null
+                          const genreId = normalizeId(g)
+                          if (!genreId) return null
+
+                          return (
+                            <a
+                              key={`${book.id}-${genreId}-${index}`}
+                              href={`/genres/${genreId}`}
+                              className="genre-pill"
+                            >
+                              {genreObj?.name ?? `Sjanger ${genreId}`}
+                            </a>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {formatAgeGroup(book.ageGroup) && (
+                    <p className="book-age">
+                      Anbefalt alder: <span>{formatAgeGroup(book.ageGroup)}</span>
+                    </p>
+                   )}
+
 
                   {book.description && (
                     <p className="book-description">{book.description}</p>
