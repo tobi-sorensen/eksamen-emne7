@@ -43,6 +43,13 @@ export const Books: CollectionConfig = {
       min: 0,
     },
     {
+      name: 'genres',
+      type: 'relationship',
+      relationTo: 'genres',
+      hasMany: true,
+      label: 'Sjangere',
+    },
+    {
       name: 'cover',
       type: 'upload',
       relationTo: 'media',
